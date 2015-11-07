@@ -1,0 +1,9 @@
+ABOSS_RAILS=/aboss-api2 \
+ABOSS_DATA=/aboss-data \
+aboss_database=aboss \
+aboss_destination=/tmp \
+aboss_negative_cash_emails=wattaint@gmail.com \
+broker_fronts=22 \
+broker_parti_id=001 \
+tsfc_send_mails=wattaint@gmail.com \
+python /aboss-lib/eod/scripts/eodconsole.py

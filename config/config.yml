@@ -1,0 +1,5 @@
+backup_path: /data/backup
+postgresql:
+  bin: /usr/pgsql-9.4/bin
+  host: aboss_pg
+  port: 5432
