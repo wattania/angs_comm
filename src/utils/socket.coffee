@@ -84,13 +84,17 @@ module.exports = (config, PORT)->
 
           if _.isArray opts.events
             for e in opts.events then event_dirs.push e
+          else
+            event_dirs.push opts.events if opts.events
 
           subscribe_dirs = [
             (path.join __dirname, '..', "socket_subscribes")
           ]
 
           if _.isArray opts.subscribes
-            for e in opts.subscribes then event_dirs.push e
+            for e in opts.subscribes then subscribe_dirs.push e
+          else
+            subscribe_dirs.push opts.subscribes if opts.subscribes
 
           for dir in event_dirs
             socket_utils = null

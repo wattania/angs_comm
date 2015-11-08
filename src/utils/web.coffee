@@ -45,6 +45,8 @@ module.exports = (config)->
 
     if _.isArray opts.assets
       for e in opts.assets then assets_path.push e
+    else
+      assets_path.push opts.assets if opts.assets
 
     @app.use (require 'connect-assets')
       paths: assets_path
@@ -108,11 +110,9 @@ module.exports = (config)->
 
     controller_paths = [(path.join __dirname, '..', 'resources')]
     if _.isArray opts.controllers
-      for e in a_opts.controllers then controller_paths.push e
-        
-    console.log "- controller path ="
-    console.log controller_paths
-    #base_controller_path = path.join __dirname, '..', 'resources', '__base'
+      for e in opts.controllers then controller_paths.push e
+    else
+      controller_paths.push opts.controllers if opts.controllers
 
     app_controller = @map_route()
 
@@ -129,11 +129,11 @@ module.exports = (config)->
             continue unless _.contains ['coffee', 'js'], _.last(_dot_split)
 
             rest_path = _.first _dot_split
-            
-            console.log path.join controller_path, file
-            m = require path.join controller_path, file
 
-            app_controller.reg rest_path, m
+            file_path = path.join controller_path, file
+            m = require file_path
+
+            app_controller.reg (file_path + ""), rest_path, m
       else
         console.log "warning: #{controller_path} , not exist"
 
@@ -188,18 +188,18 @@ module.exports = (config)->
     me = @
     app = @app
     @rest_call = {}
-    reg: (rest_path, a_module)->
+    reg: (file_path, rest_path, a_module)->
       me.rest_call[rest_path] = a_module
 
       #index
       app.get "/#{rest_path}", (req, res)->
-        console.log "Resource:#{rest_path}:index:#{req.sessionID}"
+        console.log "Rest:#{file_path}#index : #{req.sessionID}"
         me.__rest_fn req, res, 'index', (err)->
           me.render_error res, err if err 
             
       #create
       app.post "/#{rest_path}", (req, res)->
-        console.log "Resource:#{rest_path}:create"
+        console.log "Resource:#{file_path}:create"
         me.__rest_fn req, res, 'create', (e)-> me.render_error res, e if e 
         
       #update
