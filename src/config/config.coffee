@@ -1,10 +1,11 @@
+_       = require 'underscore'
 async   = require 'async'
 yaml    = require 'js-yaml'
 fs      = require 'fs'
 path    = require 'path'
 
-module.exports = ()->
-  config: (yaml.safeLoad fs.readFileSync (path.join __dirname, 'config.yml'), 'utf8'  )
+module.exports = (a_config_data)->
+  config: _.extend (yaml.safeLoad fs.readFileSync (path.join __dirname, 'config.yml'), 'utf8'  ), a_config_data
 
   util: (name)->
     

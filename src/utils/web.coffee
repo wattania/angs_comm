@@ -60,6 +60,7 @@ module.exports = (config)->
         ], (err, info)-> 
           if err 
             delete req.session.token
+            console.log "-> redirect to #{authorization_uri} "
             res.redirect authorization_uri
       
           else 
