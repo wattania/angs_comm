@@ -4,8 +4,25 @@ yaml    = require 'js-yaml'
 fs      = require 'fs'
 path    = require 'path'
 
-module.exports = (a_config_data)->
-  config: _.extend (yaml.safeLoad fs.readFileSync (path.join __dirname, 'config.yml'), 'utf8'  ), a_config_data
+module.exports = (a_config_path)->
+  
+  default_config = yaml.safeLoad fs.readFileSync (path.join __dirname, 'config.yml'), 'utf8'
+  default_config = {} unless default_config
+
+  user_config = yaml.safeLoad fs.readFileSync a_config_path, 'utf8'
+  user_config = {} unless user_config
+
+  config = {}
+  if _.isObject(user_config) and _.isObject(default_config)
+    config = _.extend default_config, user_config
+
+  else if _.isObject default_config
+    config = default_config
+
+  else if _.isObject user_config
+    config = user_config
+
+  config: config
 
   util: (name)->
     

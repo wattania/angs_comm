@@ -15,7 +15,11 @@ module.exports = (config)->
     ret.session_redis_store = @app.session_redis_store
     ret
 
-  create: ()->
+  create: (a_opts)->
+
+    opts = {}
+    opts = a_opts if _.isObject a_opts
+
     redis = config.util 'redis'
     oauth2 = config.util 'oauth'
 
@@ -26,13 +30,24 @@ module.exports = (config)->
     @app = express()
     @app.set 'view engine', 'jade'
     @app.set 'views', path.join(__dirname, '..', 'views')
-    @app.use "/fonts", express.static(path.join(__dirname, '..', 'assets/fonts'))
+    @app.use "/fonts", [
+
+      (express.static(path.join(__dirname, '..', '..', 'assets/fonts')))
+
+    ]
+
+    assets_path = [
+      path.join(__dirname, '..', '..', 'assets/css'),
+      path.join(__dirname, '..', '..', 'assets/javascripts'),
+      #path.join(__dirname, '..', 'assets/javascripts'),
+      path.join(__dirname, '..', '..', 'assets/img')
+    ]
+
+    if _.isArray opts.assets
+      for e in opts.assets then assets_path.push e
+
     @app.use (require 'connect-assets')
-      paths: [
-        path.join(__dirname, '..', 'assets/css'),
-        path.join(__dirname, '..', 'assets/javascripts'),
-        path.join(__dirname, '..', 'assets/img')
-      ]
+      paths: assets_path
 
     session     = require 'express-session'
     RedisStore  = require('connect-redis') session
@@ -91,16 +106,36 @@ module.exports = (config)->
       else
         res.redirect authorization_uri
 
-    controller_path = path.join __dirname, '..', 'resources'
-    base_controller_path = path.join __dirname, '..', 'resources', '__base'
+    controller_paths = [(path.join __dirname, '..', 'resources')]
+    if _.isArray opts.controllers
+      for e in a_opts.controllers then controller_paths.push e
+        
+    console.log "- controller path ="
+    console.log controller_paths
+    #base_controller_path = path.join __dirname, '..', 'resources', '__base'
 
     app_controller = @map_route()
 
-    for file in fs.readdirSync controller_path
-      continue if file in ["..", "."]
-      rest_path = file.split('.')[0]
-      m = require path.join __dirname, '..', 'resources', file
-      app_controller.reg rest_path, m
+    for controller_path in controller_paths
+      if fs.existsSync controller_path
+        if fs.lstatSync(controller_path).isDirectory()
+
+          for file in fs.readdirSync controller_path
+            continue if file in ["..", "."]
+
+            _dot_split = file.split(".")
+
+            continue unless _dot_split[0]
+            continue unless _.contains ['coffee', 'js'], _.last(_dot_split)
+
+            rest_path = _.first _dot_split
+            
+            console.log path.join controller_path, file
+            m = require path.join controller_path, file
+
+            app_controller.reg rest_path, m
+      else
+        console.log "warning: #{controller_path} , not exist"
 
     @
 

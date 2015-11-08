@@ -10,7 +10,11 @@ path        = require "path"
 module.exports = (config, PORT)->
   get_io: ()-> @_io
   get_all_connected_ids: ()-> _.keys @get_io().eio.clients
-  create: (web_req)-> 
+  create: (web_req, a_opts)-> 
+
+    opts = {}
+    opts = a_opts if _.isObject a_opts
+
     me = @
 
     oauth2  = config.util 'oauth'
@@ -73,7 +77,32 @@ module.exports = (config, PORT)->
           console.log 'connection -> ', socket.id, " session: ", session_id
 
           redis_socket_subscribe.subscribe socket.id
- 
+  
+          event_dirs = [
+            (path.join __dirname, '..', "socket_events")
+          ]
+
+          if _.isArray opts.events
+            for e in opts.events then event_dirs.push e
+
+          subscribe_dirs = [
+            (path.join __dirname, '..', "socket_subscribes")
+          ]
+
+          if _.isArray opts.subscribes
+            for e in opts.subscribes then event_dirs.push e
+
+          for dir in event_dirs
+            socket_utils = null
+            socket_utils = me.map_event socket, redis_socket_subscribe, config
+            me.handle_event socket, redis_socket_subscribe, socket_utils, dir
+
+          for dir in event_dirs
+            socket_utils = null
+            socket_utils = me.map_message socket, redis_socket_subscribe, config
+            me.handle_event socket, redis_socket_subscribe, socket_utils, dir
+
+          ###
           for dir in [ "socket_events", "socket_subscribes"]
             socket_utils = null
             switch dir
@@ -86,11 +115,32 @@ module.exports = (config, PORT)->
             if socket_utils
               for file in fs.readdirSync (path.join __dirname, '..', dir)
                 continue if file in ["..", "."]
+                _dot_split = file.split "."
+
+                continue unless _dot_split[0]
+                continue unless _.contains ['coffee', 'js'], _.last(_dot_split)
+
                 method_path = file.split('.')[0]
                 m = require(path.join __dirname, '..', dir, file) socket, redis_socket_subscribe, config  
                 socket_utils.reg method_path, m  
+          ###
 
     @
+
+  handle_event: (socket, redis_socket_subscribe, socket_utils, dir_path)->
+    if fs.existsSync dir_path
+      if fs.lstatSync(dir_path).isDirectory()
+
+        for file in fs.readdirSync dir_path
+          continue if file in ["..", "."]
+          _dot_split = file.split "."
+
+          continue unless _dot_split[0]
+          continue unless _.contains ['coffee', 'js'], _.last(_dot_split)
+
+          method_path = file.split('.')[0]
+          m = require(path.join dir_path, file) socket, redis_socket_subscribe, config  
+          socket_utils.reg method_path, m  
     
   get_session_id: (socket, callback)->
     request = socket.request
