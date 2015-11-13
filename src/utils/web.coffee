@@ -29,7 +29,12 @@ module.exports = (config)->
 
     @app = express()
     @app.set 'view engine', 'jade'
-    @app.set 'views', path.join(__dirname, '..', 'views')
+
+    if opts.views
+      @app.set 'views', opts.views
+    else
+      @app.set 'views', path.join(__dirname, '..', 'views')
+
     @app.use "/fonts", [
 
       (express.static(path.join(__dirname, '..', '..', 'assets/fonts')))
