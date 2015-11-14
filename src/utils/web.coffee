@@ -44,7 +44,7 @@ module.exports = (config)->
     assets_path = [
       path.join(__dirname, '..', '..', 'assets/css'),
       path.join(__dirname, '..', '..', 'assets/javascripts'),
-      #path.join(__dirname, '..', 'assets/javascripts'),
+      path.join(__dirname, '..', 'libs'),
       path.join(__dirname, '..', '..', 'assets/img')
     ]
 
