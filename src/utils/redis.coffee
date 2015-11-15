@@ -38,12 +38,20 @@ module.exports = (config)->
       async.waterfall [
         (next)-> me.__clear_socket_ids key, next
       , (next)-> me.client.sadd key, a_socket.id, next
-      ], (e)-> callback e
+      ], (e)-> callback e if _.isFunction callback
+
+    to_log_room: (a_room, callback)->
+      key = me.key "log_room:#{a_room}:socket_ids"
+      async.waterfall [
+        (next)-> me.__clear_socket_ids key, next
+      , (next)-> me.client.sadd key, a_socket.id, next
+      ], (e)-> callback e if _.isFunction callback      
 
   log_room: (a_room_name)->
     me = @
-    key = "room:log_listener"
-    publish_to_all: (a_msg, callback)->
+    #key = "room:log_listener"
+    key = me.key "log_room:#{a_room_name}"
+    publish: (a_msg, callback)->
       key = me.key "#{key}:socket_ids"
       async.waterfall [
         (next)-> 

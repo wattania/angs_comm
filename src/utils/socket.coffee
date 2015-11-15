@@ -77,7 +77,10 @@ module.exports = (config, PORT)->
           console.log 'connection -> ', socket.id, " session: ", session_id
 
           redis_socket_subscribe.subscribe socket.id
-  
+          
+          if _.isFunction opts.connection
+            opts.connection socket, redis_socket_subscribe
+
           event_dirs = [
             (path.join __dirname, '..', "socket_events")
           ]
@@ -101,7 +104,7 @@ module.exports = (config, PORT)->
             socket_utils = me.map_event socket, redis_socket_subscribe, config
             me.handle_event socket, redis_socket_subscribe, socket_utils, dir
 
-          for dir in event_dirs
+          for dir in subscribe_dirs
             socket_utils = null
             socket_utils = me.map_message socket, redis_socket_subscribe, config
             me.handle_event socket, redis_socket_subscribe, socket_utils, dir
