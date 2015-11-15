@@ -208,7 +208,7 @@ module.exports = (config)->
         me.__rest_fn req, res, 'create', (e)-> me.render_error res, e if e 
         
       #update
-      app.post "/#{rest_path}/:id", (req, res)->
+      app.put "/#{rest_path}/:id", (req, res)->
         me.__rest_fn req, res, 'update', (e)-> me.render_error res, e if e  
 
       #show
