@@ -5,8 +5,11 @@ url         = require 'url'
 _           = require 'underscore'
 async       = require 'async'
 express     = require 'express'
+body_parser = require 'body-parser'
 path        = require "path"
 fs          = require 'fs'
+multer      = require 'multer'
+
 express_cookie_parser = require 'cookie-parser'
 
 module.exports = (config)->
@@ -52,6 +55,10 @@ module.exports = (config)->
       for e in opts.assets then assets_path.push e
     else
       assets_path.push opts.assets if opts.assets
+
+    @app.use body_parser.json()
+    @app.use body_parser.urlencoded
+      extended: true
 
     @app.use (require 'connect-assets')
       paths: assets_path
@@ -156,6 +163,13 @@ module.exports = (config)->
         if _.isObject _a
 
           if _.isFunction _a[method_name]
+
+            params = req.params
+            req_body = req.body
+            if _.isObject params
+              if _.isObject req_body
+                params = _.extend params, req_body
+
             if method_name in ['index', 'create']
               
               async.waterfall [
@@ -165,6 +179,7 @@ module.exports = (config)->
                   callback err
                 else 
                   _a[method_name].apply _a, [
+                    params,
                     req, 
                     res, 
                     socket_ids
@@ -172,12 +187,15 @@ module.exports = (config)->
                   callback err
 
             else
+              if _.isObject params
+                params.id = req.params.id
+
               id = req.params.id
               async.waterfall [
                 (next)-> redis.from_session_id(req.sessionID).clear_socket next 
               ], (err, results)->
                 if err then callback(err) else 
-                  _a[method_name].apply _a, [id, req, res]
+                  _a[method_name].apply _a, [params, req, res]
                   callback err
           else
             callback "undefined method '#{method_name}'"  
