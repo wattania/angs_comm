@@ -113,9 +113,21 @@ module.exports = (config)->
                 res.redirect authorization_uri
 
               else
-                res.render 'index',
+                params = 
                   email: decode.user.email
                   user: decode.user
+
+                if _.isFunction opts.index
+                  opts.index params, (err, a_params)->
+                    if err
+                      res.status(500).type('txt').send (err + "" )
+                    else
+                      if _.isObject a_params
+                        res.render 'index', _.extend(params, a_params)
+                      else
+                        res.render 'index', params
+                else
+                  res.render 'index', params
 
       else
         res.redirect authorization_uri

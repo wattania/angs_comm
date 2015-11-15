@@ -1,5 +1,5 @@
 module.exports = (config)->
-  index: (req, res)->
+  index: (params, req, res)->
     oauth2 = config.util 'oauth'
     code = req.query.code
     oauth2.auth_token_code code, (error, result)->
