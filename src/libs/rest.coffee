@@ -1,5 +1,31 @@
 Ext.define 'RestClient',
   statics:
+    _rest_call: (a_path, func, a_params)->
+      unless Ext.isObject a_params
+        return console.log "_ invalid params for RestClient _"
+ 
+      callback  = a_params.callback
+      method    = a_params.method
+      params    = a_params.params if Ext.isObject a_params.params
+
+      operation = func
+      if method
+        operation = [func, method]
+      
+      p = 
+        path: a_path
+        operation: operation
+      
+      if Ext.isObject a_params.params     then Ext.apply p, (params: a_params.params)
+      if Ext.isFunction a_params.callback then Ext.apply p, (callback: a_params.callback)
+        
+      RestClient.call p
+    index:    (a_path, a_params)-> RestClient._rest_call a_path, "index",   a_params
+    show:     (a_path, a_params)-> RestClient._rest_call a_path, "show",    a_params
+    update:   (a_path, a_params)-> RestClient._rest_call a_path, "update",  a_params
+    create:   (a_path, a_params)-> RestClient._rest_call a_path, "create",  a_params
+    destroy:  (a_path, a_params)-> RestClient._rest_call a_path, "destroy", a_params
+
     req: (path, params)->
 
       Ext.Ajax.request
@@ -21,7 +47,7 @@ Ext.define 'RestClient',
         failure: ()->
           Ext.Msg.alert 'ERROR', 'Program Error!', Ext.emptyFn
 
-    show: (url, a_params)->
+    show1: (url, a_params)->
       operations = ['show']
       if a_params.method 
         operations.push a_params.method
@@ -41,7 +67,7 @@ Ext.define 'RestClient',
 
       RestClient.call p
 
-    destroy: (url, a_params)->
+    destroy1: (url, a_params)->
       operations = ['destroy']
       if a_params.method 
         operations.push a_params.method
