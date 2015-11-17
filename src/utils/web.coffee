@@ -173,40 +173,39 @@ module.exports = (config)->
       if _.isFunction fn 
         _a = fn config
         if _.isObject _a
+ 
+          params = req.params
+          params = (_.extend params, req.query) if method_name in ['index']
 
-          if _.isFunction _a[method_name]
+          req_body = req.body
+          if _.isObject params
+            if _.isObject req_body
+              params = _.extend params, req_body
 
-            params = req.params
-            params = (_.extend params, req.query) if method_name in ['index']
+          if method_name in ['index', 'create']
+            
+            async.waterfall [
+              (next)-> redis.from_session_id(req.sessionID).clear_socket next
+            ], (err, socket_ids)-> 
+              if err 
+                callback err
+              else 
+                called = false 
+                if params.method
+                  if _.isFunction _a["#{method_name}_#{params.method}"]
+                    called = true
+                    _a["#{method_name}_#{params.method}"].apply _a, [
+                      (err, data)-> if err then (res.json error: err) else 
+                        if data then (res.json data: data) else (res.json error: null)
+                    ,
+                      params,
+                      req, 
+                      res, 
+                      socket_ids
+                    ]                      
 
-            req_body = req.body
-            if _.isObject params
-              if _.isObject req_body
-                params = _.extend params, req_body
-
-            if method_name in ['index', 'create']
-              
-              async.waterfall [
-                (next)-> redis.from_session_id(req.sessionID).clear_socket next
-              ], (err, socket_ids)-> 
-                if err 
-                  callback err
-                else 
-                  called = false 
-                  if params.method
-                    if _.isFunction _a["#{method_name}_#{params.method}"]
-                      called = true
-                      _a["#{method_name}_#{params.method}"].apply _a, [
-                        (err, data)-> if err then (res.json error: err) else 
-                          if data then (res.json data: data) else (res.json error: null)
-                      ,
-                        params,
-                        req, 
-                        res, 
-                        socket_ids
-                      ]                      
-
-                  unless called
+                unless called
+                  if _.isFunction _a[method_name]
                     _a[method_name].apply _a, [
                       (err, data)-> if err then (res.json error: err) else 
                         if data then (res.json data: data) else (res.json error: null)
@@ -216,26 +215,36 @@ module.exports = (config)->
                       res, 
                       socket_ids
                     ]
-                 # callback err
+                   # callback err
 
-            else
-              if _.isObject params
-                params.id = req.params.id
-
-              id = req.params.id
-              async.waterfall [
-                (next)-> redis.from_session_id(req.sessionID).clear_socket next 
-              ], (err, results)->
-                if err then callback(err) else 
-                  _a[method_name].apply _a, [
-                    (err, data)-> if err then (res.json error: err) else 
-                      if data then (res.json data: data) else (res.json error: null)
-                  , params, req, res, socket_ids
-                  ]
-                  #callback err
           else
-            callback "undefined method '#{method_name}'"  
-          
+            if _.isObject params
+              params.id = req.params.id
+
+            id = req.params.id
+            async.waterfall [
+              (next)-> redis.from_session_id(req.sessionID).clear_socket next 
+            ], (err, socket_ids)->
+              if err then callback(err) else 
+                called = false 
+                if params.method
+                  if _.isFunction _a["#{method_name}_#{params.method}"]
+                    called = true
+                    _a["#{method_name}_#{params.method}"].apply _a, [
+                      (err, data)-> if err then (res.json error: err) else 
+                        if data then (res.json data: data) else (res.json error: null)
+                    , params, req, res, socket_ids
+                    ]
+
+                unless called
+                  if _.isFunction _a[method_name]
+                    _a[method_name].apply _a, [
+                      (err, data)-> if err then (res.json error: err) else 
+                        if data then (res.json data: data) else (res.json error: null)
+                    , params, req, res, socket_ids
+                    ]
+                    #callback err
+           
         else
           callback "Invalid rest controller [#{rest_path}]"
       else

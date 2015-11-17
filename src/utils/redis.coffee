@@ -61,6 +61,9 @@ module.exports = (config)->
           me.client.smembers key, next
 
       , (socket_ids, next)->
+          if _.isObject a_msg
+            _.extend a_msg, datetime: moment(new Date()).format 'YYYY-MM-DD HH:mm:ss SSS'
+            
           me.publish socket_ids, a_msg, next
 
       ], callback
