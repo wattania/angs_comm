@@ -177,6 +177,8 @@ module.exports = (config)->
           if _.isFunction _a[method_name]
 
             params = req.params
+            params = (_.extend params, req.query) if method_name in ['index']
+
             req_body = req.body
             if _.isObject params
               if _.isObject req_body
@@ -190,13 +192,31 @@ module.exports = (config)->
                 if err 
                   callback err
                 else 
-                  _a[method_name].apply _a, [
-                    params,
-                    req, 
-                    res, 
-                    socket_ids
-                  ]
-                  callback err
+                  called = false 
+                  if params.method
+                    if _.isFunction _a["#{method_name}_#{params.method}"]
+                      called = true
+                      _a["#{method_name}_#{params.method}"].apply _a, [
+                        (err, data)-> if err then (res.json error: err) else 
+                          if data then (res.json data: data) else (res.json error: null)
+                      ,
+                        params,
+                        req, 
+                        res, 
+                        socket_ids
+                      ]                      
+
+                  unless called
+                    _a[method_name].apply _a, [
+                      (err, data)-> if err then (res.json error: err) else 
+                        if data then (res.json data: data) else (res.json error: null)
+                    ,
+                      params,
+                      req, 
+                      res, 
+                      socket_ids
+                    ]
+                 # callback err
 
             else
               if _.isObject params
@@ -207,8 +227,12 @@ module.exports = (config)->
                 (next)-> redis.from_session_id(req.sessionID).clear_socket next 
               ], (err, results)->
                 if err then callback(err) else 
-                  _a[method_name].apply _a, [params, req, res]
-                  callback err
+                  _a[method_name].apply _a, [
+                    (err, data)-> if err then (res.json error: err) else 
+                      if data then (res.json data: data) else (res.json error: null)
+                  , params, req, res, socket_ids
+                  ]
+                  #callback err
           else
             callback "undefined method '#{method_name}'"  
           
