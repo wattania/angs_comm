@@ -70,10 +70,12 @@ module.exports = (config)->
       , (socket_ids, next)->
           if _.isObject a_msg
             _.extend a_msg, datetime: moment(new Date()).format 'YYYY-MM-DD HH:mm:ss SSS'
-
+          
           me.publish socket_ids, a_msg, next
 
-      ], callback
+      ], (err)-> 
+        
+        callback err if _.isFunction callback
       
   from: (a_name)->
     me = @
@@ -171,6 +173,7 @@ module.exports = (config)->
     ], callback
 
   publish: (socket_id, a_message, callback)->
+ 
     me = @
     channels = []
     if _.isString socket_id
@@ -197,9 +200,10 @@ module.exports = (config)->
 
       else
         return console.log m
-        
+    
     async.map channels, (c, done)->
-      me.client.publish c, message
+      me.client.publish c, message, done
     , (e)->
-      if _.isFunction callback
-        callback e
+ 
+      callback e if _.isFunction callback
+        
