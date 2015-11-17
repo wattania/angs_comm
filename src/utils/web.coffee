@@ -99,6 +99,10 @@ module.exports = (config)->
               (next)-> oauth2.verify_token req.session.token.access_token, next
             , (decode, next)->
               redis.add_session_id(req.sessionID).to_email decode.user.email, (err)-> next err, decode
+
+            , (decode, next)->
+              redis.set_user_info(decode.user).to_session_id req.sessionID, (err)-> next err, decode
+
               ###
               redis.client.multi()
                 .set  redis.key("session_id:#{req.sessionID}:email"),      decode.user.email
@@ -185,8 +189,14 @@ module.exports = (config)->
           if method_name in ['index', 'create']
             
             async.waterfall [
-              (next)-> redis.from_session_id(req.sessionID).clear_socket next
-            ], (err, socket_ids)-> 
+              (next)-> 
+                redis.from_session_id(req.sessionID).clear_socket (err, socket_ids)-> next err, socket_ids
+
+            , (socket_ids, next)->
+              redis.from_session_id(req.sessionID).get_user_info (err, user_info)->
+                next err, socket_ids, user_info
+
+            ], (err, socket_ids, user_info)-> 
               if err 
                 callback err
               else 
@@ -200,8 +210,8 @@ module.exports = (config)->
                     ,
                       params,
                       req, 
-                      res, 
-                      socket_ids
+                      res,
+                      {user: user_info, sockets: socket_ids} 
                     ]                      
 
                 unless called
@@ -213,7 +223,7 @@ module.exports = (config)->
                       params,
                       req, 
                       res, 
-                      socket_ids
+                      {user: user_info, sockets: socket_ids} 
                     ]
                    # callback err
 
@@ -223,8 +233,14 @@ module.exports = (config)->
 
             id = req.params.id
             async.waterfall [
-              (next)-> redis.from_session_id(req.sessionID).clear_socket next 
-            ], (err, socket_ids)->
+              (next)-> 
+                redis.from_session_id(req.sessionID).clear_socket (err, socket_ids)-> next err, socket_ids
+
+            , (socket_ids, next)->
+              redis.from_session_id(req.sessionID).get_user_info (err, user_info)->
+                next err, socket_ids, user_info
+
+            ], (err, socket_ids, user_info)-> 
               if err then callback(err) else 
                 called = false 
                 if params.method
@@ -233,7 +249,7 @@ module.exports = (config)->
                     _a["#{method_name}_#{params.method}"].apply _a, [
                       (err, data)-> if err then (res.json error: err) else 
                         if data then (res.json data: data) else (res.json error: null)
-                    , params, req, res, socket_ids
+                    , params, req, res, {user: user_info, sockets: socket_ids} 
                     ]
 
                 unless called
@@ -241,7 +257,7 @@ module.exports = (config)->
                     _a[method_name].apply _a, [
                       (err, data)-> if err then (res.json error: err) else 
                         if data then (res.json data: data) else (res.json error: null)
-                    , params, req, res, socket_ids
+                    , params, req, res, {user: user_info, sockets: socket_ids} 
                     ]
                     #callback err
            

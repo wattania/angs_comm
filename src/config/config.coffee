@@ -4,6 +4,9 @@ yaml    = require 'js-yaml'
 fs      = require 'fs'
 path    = require 'path'
 
+uuid          = require 'uuid'
+sha1    = require 'sha1'    
+
 module.exports = (a_config_path)->
   
   default_config = yaml.safeLoad fs.readFileSync (path.join __dirname, 'config.yml'), 'utf8'
@@ -23,6 +26,8 @@ module.exports = (a_config_path)->
     config = user_config
 
   config: config
+
+  sha1_uuid: ()-> sha1 uuid.v4()
 
   util: (name)->
     

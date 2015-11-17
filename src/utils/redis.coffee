@@ -17,6 +17,13 @@ module.exports = (config)->
   key: (text)-> "#{REDIS_KEY_PREFIX}#{text}"
   k: (text)-> @key text
 
+  set_user_info: (a_user_info)->
+    me = @ 
+    to_session_id: (a_session_id, done)->
+      me.client.multi()
+        .hmset (me.key "session_id:#{a_session_id}:user_info"), a_user_info
+        .exec done
+
   add_session_id: (a_session_id)->
     me = @
     to_email: (a_email, done)->
@@ -63,7 +70,7 @@ module.exports = (config)->
       , (socket_ids, next)->
           if _.isObject a_msg
             _.extend a_msg, datetime: moment(new Date()).format 'YYYY-MM-DD HH:mm:ss SSS'
-            
+
           me.publish socket_ids, a_msg, next
 
       ], callback
@@ -93,6 +100,10 @@ module.exports = (config)->
     get_email: (callback)->
       key = me.key "#{key}:email"
       me.client.get key, callback 
+
+    get_user_info: (callback)->
+      key = me.key "#{key}:user_info"
+      me.client.hgetall key, callback
       
   __clear_socket_ids: (key, done)->
     all_connected = socket.get_all_connected_ids()
