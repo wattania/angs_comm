@@ -14,7 +14,6 @@ func = (config)->
     tokenPath: '/oauth/token'
   
   create_token: (token_info)-> 
-    console.log "-oauth-create token-"
     @oauth2.accessToken.create token_info
 
   __token_key: (access_token)->       

@@ -74,7 +74,7 @@ module.exports = (config, PORT)->
         if err 
           console.log "Invalid session_id for socket connection!"
         else
-          console.log 'connection -> ', socket.id, " session: ", session_id
+          #console.log 'connection -> ', socket.id, " session: ", session_id
 
           redis_socket_subscribe.subscribe socket.id
           
@@ -175,7 +175,7 @@ module.exports = (config, PORT)->
       socket.on method_path, ()-> 
         args = arguments
 
-        console.log "EXEC #{method_path}"
+        #console.log "EXEC #{method_path}"
         async.waterfall [
           (next)-> me.get_session_id socket, next
 

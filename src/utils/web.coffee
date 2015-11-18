@@ -89,7 +89,6 @@ module.exports = (config)->
         ], (err, info)-> 
           if err 
             delete req.session.token
-            console.log "-> redirect to #{authorization_uri} "
             res.redirect authorization_uri
       
           else 
@@ -103,15 +102,8 @@ module.exports = (config)->
             , (decode, next)->
               redis.set_user_info(decode.user).to_session_id req.sessionID, (err)-> next err, decode
 
-              ###
-              redis.client.multi()
-                .set  redis.key("session_id:#{req.sessionID}:email"),      decode.user.email
-                .sadd redis.key("email:#{decode.user.email}:session_ids"), req.sessionID
-                .exec (err)-> next err, decode
-              ###
-
             ], (err, decode)->
-              console.log "Decode -> ", decode
+              
               if err 
                 delete req.session.token
                 res.redirect authorization_uri
@@ -277,13 +269,11 @@ module.exports = (config)->
 
       #index
       app.get "/#{rest_path}", (req, res)->
-        console.log "Rest:#{file_path}#index : #{req.sessionID}"
         me.__rest_fn req, res, 'index', (err)->
           me.render_error res, err if err 
             
       #create
       app.post "/#{rest_path}", (req, res)->
-        console.log "Resource:#{file_path}:create"
         me.__rest_fn req, res, 'create', (e)-> me.render_error res, e if e 
         
       #update
@@ -296,7 +286,6 @@ module.exports = (config)->
 
       #destroy
       app.delete "/#{rest_path}/:id", (req, res)->
-        console.log "Resource:#{rest_path}:destroy:#{req.params.id}"
         r = me.__rest_fn req, res, 'destroy'
         res.json error: r if _.isString r
 
