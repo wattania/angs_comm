@@ -7,8 +7,11 @@ path    = require 'path'
 uuid          = require 'uuid'
 sha1    = require 'sha1'    
 
-module.exports = (a_config_path)->
-  
+module.exports = (a_config_path, a_opts)->
+  utils_dirs = [path.join(__dirname, "./../utils")]
+  if (_.isObject a_opts) and (_.isArray a_opts.dirs)
+    for p_dir in a_opts.dirs then utils_dirs.push p_dir
+ 
   default_config = yaml.safeLoad fs.readFileSync (path.join __dirname, 'config.yml'), 'utf8'
   default_config = {} unless default_config
 
@@ -29,13 +32,21 @@ module.exports = (a_config_path)->
 
   sha1_uuid: ()-> sha1 uuid.v4()
 
-  util: (name)->
-    
-    unless @["__#{name}"]
-      @["__#{name}"] = require("./../utils/#{name}") @ 
-  
-    @["__#{name}"]
+  util: (name)-> 
+    me = @
+    unless @["__#{name}"] 
+      for util_dir_path in utils_dirs  
+        if fs.existsSync util_dir_path 
+          if fs.lstatSync(util_dir_path).isDirectory()
+            source_path         = path.join util_dir_path, name
 
+            for ext in ["coffee", "js"]
+              _src = source_path + ".#{ext}"
+              if (fs.existsSync _src) and fs.lstatSync(_src).isFile()
+                unless me["__#{name}"] then me["__#{name}"] = require(_src) me 
+                        
+    @["__#{name}"]
+ 
   get_raw: -> @config
   get_backup_path: (callback)->
     create_if_not_exist = true
