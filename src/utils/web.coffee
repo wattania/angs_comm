@@ -167,8 +167,8 @@ module.exports = (config)->
     if rest_path
       fn = me.rest_call[rest_path]
       if _.isFunction fn 
-        _a = fn config
-        if _.isObject _a
+        self = fn config
+        if _.isObject self
  
           params = req.params
           params = (_.extend params, req.query) if method_name in ['index']
@@ -194,11 +194,17 @@ module.exports = (config)->
               else 
                 called = false 
                 if params.method
-                  if _.isFunction _a["#{method_name}_#{params.method}"]
+                  if _.isFunction self["#{method_name}_#{params.method}"]
                     called = true
-                    _a["#{method_name}_#{params.method}"].apply _a, [
-                      (err, data)-> if err then (res.json error: err) else 
-                        if data then (res.json data: data) else (res.json error: null)
+                    self["#{method_name}_#{params.method}"].apply self, [
+                      (err, data)-> 
+                        if err 
+                          res.json error: err
+                        else 
+                          if data
+                            res.json data: data
+                          else 
+                            res.json error: null
                     ,
                       params,
                       req, 
@@ -209,10 +215,17 @@ module.exports = (config)->
                     return callback "Undefined method '#{method_name}_#{params.method}' "
 
                 unless called
-                  if _.isFunction _a[method_name]
-                    _a[method_name].apply _a, [
-                      (err, data)-> if err then (res.json error: err) else 
-                        if data then (res.json data: data) else (res.json error: null)
+                  if _.isFunction self[method_name]
+                    self[method_name].apply self, [
+                      (err, data)-> 
+                        console.log "-> ", arguments
+                        if err 
+                          res.json error: err
+                        else 
+                          if data
+                            res.json data: data
+                          else 
+                            res.json error: null
                     ,
                       params,
                       req, 
@@ -237,32 +250,44 @@ module.exports = (config)->
                 next err, socket_ids, user_info
 
             ], (err, socket_ids, user_info)-> 
-              console.log "-c- ", arguments
 
               if err then callback(err) else 
                 called = false 
                 if params.method
                   
-                  if _.isFunction _a["#{method_name}_#{params.method}"]
+                  if _.isFunction self["#{method_name}_#{params.method}"]
                     
                     called = true
                     
-                    _a["#{method_name}_#{params.method}"].apply _a, [
-                      (err, data)-> if err then (res.json error: err) else 
-                        if data then (res.json data: data) else (res.json error: null)
+                    self["#{method_name}_#{params.method}"].apply self, [
+                      (err, data)-> 
+                        if err 
+                          res.json error: err
+                        else 
+                          if data 
+                            res.json data: data 
+                          else 
+                            res.json error: null
+
                     , params, req, res, {user: user_info, sockets: socket_ids} 
                     ]
-                    console.log called
+                    
                   else
                     return callback "Undefined method '#{method_name}_#{params.method}' "
 
                 unless called
                   
-                  if _.isFunction _a[method_name]
+                  if _.isFunction self[method_name]
                     
-                    _a[method_name].apply _a, [
-                      (err, data)-> if err then (res.json error: err) else 
-                        if data then (res.json data: data) else (res.json error: null)
+                    self[method_name].apply self, [
+                      (err, data)-> 
+                        if err
+                          res.json error: err
+                        else 
+                          if data 
+                            res.json data: data
+                          else
+                            res.json error: null
 
                     , params, req, res, {user: user_info, sockets: socket_ids} 
                     ]
