@@ -111,29 +111,6 @@ module.exports = (config, PORT)->
             socket_utils = me.map_message socket, redis_socket_subscribe, config
             me.handle_event socket, redis_socket_subscribe, socket_utils, dir
 
-          ###
-          for dir in [ "socket_events", "socket_subscribes"]
-            socket_utils = null
-            switch dir
-              when "socket_events"
-                socket_utils = me.map_event socket, redis_socket_subscribe, config
-
-              when "socket_subscribes"
-                socket_utils = me.map_message socket, redis_socket_subscribe, config
-
-            if socket_utils
-              for file in fs.readdirSync (path.join __dirname, '..', dir)
-                continue if file in ["..", "."]
-                _dot_split = file.split "."
-
-                continue unless _dot_split[0]
-                continue unless _.contains ['coffee', 'js'], _.last(_dot_split)
-
-                method_path = file.split('.')[0]
-                m = require(path.join __dirname, '..', dir, file) socket, redis_socket_subscribe, config  
-                socket_utils.reg method_path, m  
-          ###
-
     @
 
   handle_event: (socket, redis_socket_subscribe, socket_utils, dir_path)->
