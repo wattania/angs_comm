@@ -8,6 +8,8 @@ async       = require 'async'
 path        = require "path"
 
 module.exports = (config, PORT)->
+  file_util = config.util 'file'
+
   get_io: ()-> @_io
   get_all_connected_ids: ()-> _.keys @get_io().eio.clients
   create: (web_req, a_opts)-> 
@@ -135,19 +137,25 @@ module.exports = (config, PORT)->
     @
 
   handle_event: (socket, redis_socket_subscribe, socket_utils, dir_path)->
-    if fs.existsSync dir_path
-      if fs.lstatSync(dir_path).isDirectory()
+    
+    file_util.scan dir_path, ["coffee", "js"], (err, file_lists) ->
 
-        for file in fs.readdirSync dir_path
-          continue if file in ["..", "."]
-          _dot_split = file.split "."
+      async.map file_lists, (file, done)->
+        method_path = []
+        m = file.split('.')[0]
+        m = m.split dir_path
+        for p in  _.last(m).split "/"
+          method_path.push (p + "").trim() if p 
 
-          continue unless _dot_split[0]
-          continue unless _.contains ['coffee', 'js'], _.last(_dot_split)
+        method_path = method_path.join "/"
+         
+        _m = require(file) socket, redis_socket_subscribe, config 
+        socket_utils.reg method_path, _m
 
-          method_path = file.split('.')[0]
-          m = require(path.join dir_path, file) socket, redis_socket_subscribe, config  
-          socket_utils.reg method_path, m  
+        done()
+
+      , ()->
+
     
   get_session_id: (socket, callback)->
     request = socket.request
