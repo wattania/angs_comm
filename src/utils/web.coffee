@@ -205,6 +205,8 @@ module.exports = (config)->
                       res,
                       {user: user_info, sockets: socket_ids} 
                     ]                      
+                  else
+                    return callback "Undefined method '#{method_name}_#{params.method}' "
 
                 unless called
                   if _.isFunction _a[method_name]
@@ -217,9 +219,11 @@ module.exports = (config)->
                       res, 
                       {user: user_info, sockets: socket_ids} 
                     ]
-                   # callback err
+                  else
+                    return callback "no method #{method_name}"
 
           else
+
             if _.isObject params
               params.id = req.params.id
 
@@ -233,25 +237,38 @@ module.exports = (config)->
                 next err, socket_ids, user_info
 
             ], (err, socket_ids, user_info)-> 
+              console.log "-c- ", arguments
+
               if err then callback(err) else 
                 called = false 
                 if params.method
+                  
                   if _.isFunction _a["#{method_name}_#{params.method}"]
+                    
                     called = true
+                    
                     _a["#{method_name}_#{params.method}"].apply _a, [
                       (err, data)-> if err then (res.json error: err) else 
                         if data then (res.json data: data) else (res.json error: null)
                     , params, req, res, {user: user_info, sockets: socket_ids} 
                     ]
+                    console.log called
+                  else
+                    return callback "Undefined method '#{method_name}_#{params.method}' "
 
                 unless called
+                  
                   if _.isFunction _a[method_name]
+                    
                     _a[method_name].apply _a, [
                       (err, data)-> if err then (res.json error: err) else 
                         if data then (res.json data: data) else (res.json error: null)
+
                     , params, req, res, {user: user_info, sockets: socket_ids} 
                     ]
-                    #callback err
+                  else
+                    
+                    return callback "Undefined method '#{method_name}' "
            
         else
           callback "Invalid rest controller [#{rest_path}]"
@@ -269,25 +286,23 @@ module.exports = (config)->
 
       #index
       app.get "/#{rest_path}", (req, res)->
-        me.__rest_fn req, res, 'index', (err)->
-          me.render_error res, err if err 
+        me.__rest_fn req, res, 'index', (err)->   res.json error: err
             
       #create
       app.post "/#{rest_path}", (req, res)->
-        me.__rest_fn req, res, 'create', (e)-> me.render_error res, e if e 
+        me.__rest_fn req, res, 'create', (err)->  res.json error: err
         
       #update
       app.put "/#{rest_path}/:id", (req, res)->
-        me.__rest_fn req, res, 'update', (e)-> me.render_error res, e if e  
+        me.__rest_fn req, res, 'update', (err)->  res.json error: err
 
       #show
       app.get "/#{rest_path}/:id", (req, res)->
-        me.__rest_fn req, res, 'show', (e)-> me.render_error res, e if e
+        me.__rest_fn req, res, 'show', (err)->    res.json error: err
 
       #destroy
       app.delete "/#{rest_path}/:id", (req, res)->
-        r = me.__rest_fn req, res, 'destroy'
-        res.json error: r if _.isString r
+        me.__rest_fn req, res, 'destroy', (err)-> res.json error: err
 
   render_error: (res, err)->
     res.render 'page_error',
