@@ -58,6 +58,14 @@ module.exports = (config)->
     me = @
     #key = "room:log_listener"
     key = me.key "log_room:#{a_room_name}"
+    get_sockets: (callback)->
+      key = me.key "#{key}:socket_ids"
+      me.client.smembers key, callback
+
+    clear_socket: (callback)-> 
+      key = me.key "#{key}:socket_ids"
+      me.__clear_socket_ids key, callback
+
     publish: (a_msg, callback)->
       key = me.key "#{key}:socket_ids"
       async.waterfall [
@@ -108,17 +116,22 @@ module.exports = (config)->
       me.client.hgetall key, callback
       
   __clear_socket_ids: (key, done)->
+    unless _.last(key.split ":") == "#{KEY_SOCKET_IDS}" 
+      return done() 
+
     all_connected = socket.get_all_connected_ids()
-    return done() if all_connected.length <= 0
-    return done() unless _.last(key.split ":") == "#{KEY_SOCKET_IDS}" 
-    
+    if all_connected.length <= 0
+      return @client.del key, (err)-> done err
+
     key_tmp = @key "_#{KEY_SOCKET_IDS}"
+
     @client.multi()
       .del key_tmp
       .sadd key_tmp, all_connected
       .sinterstore key, key, key_tmp
       .del key_tmp
-      .exec (err, results)-> done err
+      .exec (err, results)-> 
+        done err
     
   __clear_session_ids: (key, done)->
     me = @
