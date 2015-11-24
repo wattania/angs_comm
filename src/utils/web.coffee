@@ -218,7 +218,6 @@ module.exports = (config)->
                   if _.isFunction self[method_name]
                     self[method_name].apply self, [
                       (err, data)-> 
-                        console.log "-> ", arguments
                         if err 
                           res.json error: err
                         else 
