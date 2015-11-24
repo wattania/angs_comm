@@ -181,7 +181,12 @@ module.exports = (config, PORT)->
             console.log e
           else
             if _.isFunction module.exec
-              params = []
-              for prop, value of args then params.push value
+              params = [] 
+              for prop, value of args 
+                if _.isFunction value
+                  params.unshift value
+                else
+                  params.push value
+                
               params.push info
               module["exec"].apply module, params
