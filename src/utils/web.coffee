@@ -159,6 +159,26 @@ module.exports = (config)->
 
     @
 
+  __response_fn: (res, err, data, a_opts)->
+    opts = {}
+    opts = a_opts if _.isObject a_opts
+
+    if opts.file_path
+      fs.stat opts.file_path, (e)->
+        if e
+          res.json error: "#{e.code}: #{e.path}"
+        else
+          res.sendFile opts.file_path  
+
+    else
+      if err 
+        res.json error: err
+      else 
+        if data 
+          res.json data: data 
+        else 
+          res.json error: null
+
   __rest_fn: (req, res, method_name, callback)->
     me = @
     redis = config.util 'redis'
@@ -197,14 +217,7 @@ module.exports = (config)->
                   if _.isFunction self["#{method_name}_#{params.method}"]
                     called = true
                     self["#{method_name}_#{params.method}"].apply self, [
-                      (err, data)-> 
-                        if err 
-                          res.json error: err
-                        else 
-                          if data
-                            res.json data: data
-                          else 
-                            res.json error: null
+                      (err, data, a_opts)-> me.__response_fn res, err, data, a_opts
                     ,
                       params,
                       req, 
@@ -259,15 +272,7 @@ module.exports = (config)->
                     called = true
                     
                     self["#{method_name}_#{params.method}"].apply self, [
-                      (err, data)-> 
-                        if err 
-                          res.json error: err
-                        else 
-                          if data 
-                            res.json data: data 
-                          else 
-                            res.json error: null
-
+                      (err, data, a_opts)-> me.__response_fn res, err, data, a_opts
                     , params, req, res, {user: user_info, sockets: socket_ids} 
                     ]
                     
