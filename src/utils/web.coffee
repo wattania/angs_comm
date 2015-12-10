@@ -171,7 +171,7 @@ module.exports = (config)->
         if _.isObject self
  
           params = req.params
-          params = (_.extend params, req.query) if method_name in ['index']
+          params = (_.extend params, req.query) if method_name in ['index', 'show']
 
           req_body = req.body
           if _.isObject params
