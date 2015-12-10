@@ -59,7 +59,9 @@ module.exports = (config)->
 
             else if _.isString suffix
               if ext == suffix
-                returnFiles.push filePath  
+                returnFiles.push filePath
+            else
+              returnFiles.push filePath
             
             next()
           
