@@ -1,5 +1,7 @@
 COOKIE_SECRET   = process.env.COOKIE_SECRET
 EXPRESS_SID_KEY = process.env.EXPRESS_SID_KEY
+REDIS_HOST      = process.env.REDIS_HOST || 'redis'
+REDIS_PORT      = process.env.REDIS_PORT || 6379
 
 url         = require 'url'
 _           = require 'underscore'
@@ -66,7 +68,7 @@ module.exports = (config)->
     session     = require 'express-session'
     RedisStore  = require('connect-redis') session
 
-    @app.session_redis_store = new RedisStore host: 'redis'
+    @app.session_redis_store = new RedisStore host: REDIS_HOST, port: REDIS_PORT
     @app.use session
       store: @app.session_redis_store
       secret: COOKIE_SECRET
