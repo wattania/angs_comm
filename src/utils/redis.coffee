@@ -3,8 +3,8 @@ async   = require 'async'
 redis   = require 'redis'
 moment  = require 'moment'
 
-REDIS_PORT      = 6379
-REDIS_HOST      = 'redis'
+REDIS_PORT      = process.env.REDIS_PORT || 6379
+REDIS_HOST      = process.env.REDIS_HOST || 'redis'
 
 REDIS_KEY_PREFIX = ""
 KEY_SOCKET_IDS = 'socket_ids'
