@@ -172,3 +172,53 @@ Ext.define 'RestClient',
         xhr.setRequestHeader "Content-type", "application/json"  
         xhr.setRequestHeader "Authorization", "Bearer #{access_token}"  
         xhr.send JSON.stringify form_data
+
+    download_tmp_file: (a_filehash, callback)->
+      window_height = 70
+      window_width = 300
+
+      url = "/fileutil/#{a_filehash}?method=download"
+
+      win = Ext.create 'Ext.window.Window',
+        title: Font.fa 'refresh', 'Downloading ..', 'fa-splin'
+        width: window_width
+        height: window_height
+        listeners:
+          show: ()->
+            Ext.defer ()->
+              iframe = Ext.create "Ext.Component",
+                xtype : "component"
+                hidden: true
+                autoEl :
+                  tag : "iframe"
+                  src : url
+
+              console.log win.add iframe
+
+              Ext.defer ()->
+                callback()
+                
+                ##############################
+                catchtime = ""
+                count = 60
+                c = count
+                closeMe=()->
+                  c -= 1
+                  if c < 0
+                    win.close()
+                    window.clearInterval catchtime
+                  else
+                    if(c <= (count - 3))
+                      win.setVisible false
+                catchtime = window.setInterval closeMe, 1000
+                ##############################
+
+
+              , 250
+
+            , 250
+
+
+
+      win.showAt (outerWidth - (window_width)), (outerHeight - (window_height + 100))
+       

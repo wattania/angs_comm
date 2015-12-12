@@ -1,7 +1,10 @@
 fs    = require 'fs'
+os    = require 'os'
 async = require 'async'
 path  = require 'path'
 _     = require 'underscore'
+uuid  = require 'uuid'
+sha1  = require 'sha1'
 
 module.exports = (config)->
   scan_sync: (a_dir, a_suffix)->
@@ -67,3 +70,27 @@ module.exports = (config)->
           
       , (err)->
         callback err, returnFiles
+
+  get_tmp_file_path: (a_filename, callback)->
+    file_path = path.join os.tmpdir(), a_filename
+
+    fs.stat file_path, (err, stat)->
+      if err 
+        callback "file not found"
+      else
+        callback null, file_path
+       
+        
+
+  write_tmp_file: (a_file_extension, a_data, done)->
+    file_extension = ""
+    file_extension = ".#{a_file_extension}" if a_file_extension
+
+    file_name = (sha1 uuid.v4()) + "#{file_extension}"
+    file_path = path.join os.tmpdir(), file_name
+    async.waterfall [
+      (next)->
+        fs.writeFile file_path, a_data, next
+
+    ], (err)->
+      done err, file_name
