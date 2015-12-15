@@ -220,5 +220,5 @@ Ext.define 'RestClient',
 
 
 
-      win.showAt (outerWidth - (window_width)), (outerHeight - (window_height + 100))
+      win.show()
        
