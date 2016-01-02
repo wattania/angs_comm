@@ -66,6 +66,10 @@ module.exports = (config)->
       key = me.key "#{key}:socket_ids"
       me.__clear_socket_ids key, callback
 
+    count: (callback)->
+      key = me.key "#{key}:socket_ids"
+      me.client.scard key, callback
+
     publish: (a_msg, callback)->
       key = me.key "#{key}:socket_ids"
       async.waterfall [
