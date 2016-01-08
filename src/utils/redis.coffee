@@ -131,7 +131,7 @@ module.exports = (config)->
 
     @client.multi()
       .del key_tmp
-      .sadd key_tmp, all_connected
+      .sadd key_tmp, _.map(all_connected, (e)-> "/##{e}")
       .sinterstore key, key, key_tmp
       .del key_tmp
       .exec (err, results)-> 
